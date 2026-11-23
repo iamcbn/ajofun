@@ -3,6 +3,9 @@
   "name": "ajofun",
   "compatibility_date": "2026-11-23",
   "pages_build_output_dir": "./frontend/dist",
+  "assets": {
+    "directory": "./frontend/dist"
+  },
   "observability": {
     "logs": {
       "enabled": true,
@@ -14,9 +17,6 @@
       "enabled": true,
       "head_sampling_rate": 1,
       "persist": true
-    },
-    "issue_detection": {
-      "enabled": true
     }
   }
 }
