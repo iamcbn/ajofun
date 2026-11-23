@@ -205,9 +205,6 @@ export function HomePage() {
         }`}
       >
         <div className="space-y-5">
-          <div className="inline-flex items-center gap-2 rounded-full border border-seal/20 bg-seal/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-seal">
-            <span>Private gift exchanges</span>
-          </div>
           <h1 className="font-display text-3xl font-semibold leading-[1.12] tracking-tight text-ink sm:text-5xl">
             Host a gift exchange without spoiling the surprise.
           </h1>

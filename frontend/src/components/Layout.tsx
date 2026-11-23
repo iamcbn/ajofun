@@ -46,9 +46,6 @@ export function Layout({ children }: { children: ReactNode }) {
                 Àjọfún
               </span>
             </Link>
-            <span className="hidden rounded-full border border-hairline bg-surface-subtle px-2.5 py-0.5 text-[11px] font-medium text-ink-muted sm:inline-flex">
-              Gift Exchange Studio
-            </span>
           </div>
 
           {showNav && (
