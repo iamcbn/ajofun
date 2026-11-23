@@ -1,0 +1,396 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #FAF8F4;
+  --surface: #FFFFFF;
+  --surface-subtle: #F3EFE7;
+  --ink: #1C1917;
+  --ink-muted: #57534E;
+  --border: #E5DFD3;
+  --accent-pine: #1F4E3D;
+  --accent-pine-hover: #173B2E;
+  --accent-seal: #9B2C2C;
+  --accent-seal-hover: #7F2121;
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@layer base {
+  html {
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    color: var(--ink);
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  input:not([type='checkbox']):not([type='radio']):not(.otp-cell-input),
+  select,
+  textarea {
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  }
+
+  input:not([type='checkbox']):not([type='radio']):not(.otp-cell-input):not([aria-invalid='true']):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: var(--accent-pine);
+    box-shadow: 0 0 0 1px var(--accent-pine);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent-pine);
+    outline-offset: 2px;
+  }
+
+  input.otp-cell-input:focus,
+  input.otp-cell-input:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+@keyframes ajofunShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes ajofunFadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ajofunGentlePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes ajofunProgressSlide {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(40%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+.skeleton-shimmer {
+  background-color: var(--surface-subtle);
+  background-image: linear-gradient(90deg, #F3EFE7 0%, #E6DEC8 50%, #F3EFE7 100%);
+  background-size: 200% 100%;
+  animation: ajofunShimmer 1.7s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: ajofunFadeSlideUp 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-gentle-pulse {
+  animation: ajofunGentlePulse 2.2s ease-in-out infinite;
+}
+
+.animate-progress-bar {
+  width: 45%;
+  animation: ajofunProgressSlide 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.glossy-privacy-veil {
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.56) 0%,
+      rgba(250, 248, 244, 0.34) 35%,
+      rgba(255, 255, 255, 0.52) 52%,
+      rgba(243, 239, 231, 0.44) 100%
+    );
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(229, 223, 211, 0.55);
+}
+
+@keyframes otpBackdropIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes otpModalIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.975);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes otpStepIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes otpDigitPop {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.78);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes otpCaretBlink {
+  0%, 45% {
+    opacity: 1;
+  }
+  55%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes otpErrorShakeA {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  16% {
+    transform: translateX(-6px);
+  }
+  34% {
+    transform: translateX(5px);
+  }
+  52% {
+    transform: translateX(-3.5px);
+  }
+  70% {
+    transform: translateX(2px);
+  }
+  86% {
+    transform: translateX(-1px);
+  }
+}
+
+@keyframes otpErrorShakeB {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  16% {
+    transform: translateX(-6px);
+  }
+  34% {
+    transform: translateX(5px);
+  }
+  52% {
+    transform: translateX(-3.5px);
+  }
+  70% {
+    transform: translateX(2px);
+  }
+  86% {
+    transform: translateX(-1px);
+  }
+}
+
+@keyframes otpErrorShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+@keyframes otpErrorHaloA {
+  0% {
+    box-shadow: 0 0 0 0 rgba(155, 44, 44, 0.28);
+  }
+  45% {
+    box-shadow: 0 0 0 3px rgba(155, 44, 44, 0.20);
+  }
+  100% {
+    box-shadow: 0 0 0 1px rgba(155, 44, 44, 0.12);
+  }
+}
+
+@keyframes otpErrorHaloB {
+  0% {
+    box-shadow: 0 0 0 0 rgba(155, 44, 44, 0.28);
+  }
+  45% {
+    box-shadow: 0 0 0 3px rgba(155, 44, 44, 0.20);
+  }
+  100% {
+    box-shadow: 0 0 0 1px rgba(155, 44, 44, 0.12);
+  }
+}
+
+@keyframes otpSuccessPop {
+  0% {
+    transform: scale(0.96);
+  }
+  60% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.otp-backdrop-in {
+  animation: otpBackdropIn 180ms ease-out both;
+}
+
+.otp-modal-in {
+  animation: otpModalIn 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.otp-step-in {
+  animation: otpStepIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.otp-digit-pop {
+  display: inline-block;
+  animation: otpDigitPop 185ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.otp-caret-blink {
+  animation: otpCaretBlink 1.05s ease-in-out infinite;
+}
+
+.otp-error-shake-a {
+  animation: otpErrorShakeA 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.otp-error-shake-b {
+  animation: otpErrorShakeB 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.otp-error-shimmer {
+  background-image: linear-gradient(
+    110deg,
+    rgba(155, 44, 44, 0) 0%,
+    rgba(155, 44, 44, 0) 34%,
+    rgba(185, 28, 28, 0.14) 45%,
+    rgba(239, 68, 68, 0.28) 50%,
+    rgba(185, 28, 28, 0.14) 55%,
+    rgba(155, 44, 44, 0) 66%,
+    rgba(155, 44, 44, 0) 100%
+  );
+  background-size: 280% 100%;
+  animation: otpErrorShimmer 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.otp-verifying-shimmer {
+  background-image: linear-gradient(
+    110deg,
+    rgba(31, 78, 61, 0) 0%,
+    rgba(31, 78, 61, 0) 34%,
+    rgba(31, 78, 61, 0.08) 45%,
+    rgba(31, 78, 61, 0.18) 50%,
+    rgba(31, 78, 61, 0.08) 55%,
+    rgba(31, 78, 61, 0) 66%,
+    rgba(31, 78, 61, 0) 100%
+  );
+  background-size: 280% 100%;
+  animation: otpErrorShimmer 1.2s ease-in-out infinite;
+}
+
+.otp-error-halo-a {
+  animation: otpErrorHaloA 520ms ease-out both;
+}
+
+.otp-error-halo-b {
+  animation: otpErrorHaloB 520ms ease-out both;
+}
+
+.otp-success-pop {
+  animation: otpSuccessPop 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton-shimmer,
+  .animate-fade-in,
+  .animate-gentle-pulse,
+  .animate-progress-bar,
+  .animate-spin,
+  .motion-safe\:animate-spin,
+  .animate-pulse,
+  .animate-ping,
+  .otp-backdrop-in,
+  .otp-modal-in,
+  .otp-step-in,
+  .otp-digit-pop,
+  .otp-caret-blink,
+  .otp-error-shake-a,
+  .otp-error-shake-b,
+  .otp-error-shimmer,
+  .otp-verifying-shimmer,
+  .otp-error-halo-a,
+  .otp-error-halo-b,
+  .otp-success-pop {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .otp-error-shimmer,
+  .otp-verifying-shimmer {
+    background-image: none !important;
+  }
+}

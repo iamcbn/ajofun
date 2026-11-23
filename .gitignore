@@ -1,0 +1,92 @@
+# ==========================================
+# Secret Santa / Àjọfún - Git Ignore
+# ==========================================
+
+# --- Environment and Secrets ---
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+*.cert
+*.pfx
+*.p12
+
+# --- Node & Frontend ---
+node_modules/
+*/node_modules/
+dist/
+*/dist/
+build/
+*/build/
+.turbo/
+*.tsbuildinfo
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Python & Backend ---
+.venv/
+*/.venv/
+venv/
+*/venv/
+env/
+*/env/
+ENV/
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+*/.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- Databases & Local State ---
+*.sqlite
+*.sqlite3
+*.db
+.neon
+.neon/
+*/.neon
+*/.neon/
+
+# --- Operating System Files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Thumbs.db:encryptable
+desktop.ini
+
+# --- IDEs & Editors ---
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+*~
+
+# --- Temp, Scratch & Logs ---
+*.log
+*.tmp
+*.bak
+scratch/
+run-*/
+audit-*/

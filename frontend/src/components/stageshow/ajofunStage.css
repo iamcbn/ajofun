@@ -1,0 +1,249 @@
+/* Scoped Àjọfún look + composition rules for HowItWorksStageshow */
+.look-ajofun .ss-stage {
+  --ss-canvas: #FAF8F4;
+  --ss-surface: #FFFFFF;
+  --ss-chrome: #F3EFE7;
+  --ss-well: #F3EFE7;
+  --ss-raised: #FFFFFF;
+  --ss-line: #E5DFD3;
+  --ss-line-faint: rgba(28, 25, 23, 0.06);
+  --ss-ink-1: rgba(28, 25, 23, 0.045);
+  --ss-ink-2: rgba(28, 25, 23, 0.07);
+  --ss-ink-3: rgba(28, 25, 23, 0.1);
+  --ss-fill: #E5DFD3;
+  --ss-ink-4: rgba(28, 25, 23, 0.14);
+  --ss-ink-5: rgba(28, 25, 23, 0.22);
+
+  --ss-text-strong: #1C1917;
+  --ss-text: #1C1917;
+  --ss-text-faint: #57534E;
+  --ss-icon: #57534E;
+  --ss-icon-faint: #8A837C;
+
+  --ss-accent: #1F4E3D;
+  --ss-accent-2: #9B2C2C;
+  --ss-accent-soft: rgba(31, 78, 61, 0.11);
+  --ss-accent-text: #1F4E3D;
+  --ss-success: #1F4E3D;
+  --ss-success-soft: rgba(31, 78, 61, 0.11);
+  --ss-success-text: #1F4E3D;
+  --ss-danger: #9B2C2C;
+  --ss-danger-soft: rgba(155, 44, 44, 0.11);
+  --ss-danger-text: #9B2C2C;
+
+  --ss-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ss-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --ss-radius-sm: 6px;
+  --ss-radius-md: 8px;
+  --ss-radius-lg: 10px;
+  --ss-radius-window: 12px;
+  --ss-radius-pill: 999px;
+
+  --ss-shadow-window: 0 0 0 1px #E5DFD3, 0 8px 24px -10px rgba(28, 25, 23, 0.12);
+  --ss-shadow-hero: 0 0 0 1px #E5DFD3, 0 22px 44px -16px rgba(28, 25, 23, 0.16);
+  --ss-shadow-satellite: 0 0 0 1px #E5DFD3, 0 14px 30px -8px rgba(28, 25, 23, 0.18), 0 4px 10px -4px rgba(28, 25, 23, 0.08);
+
+  --gutter: 24px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--ss-well);
+  box-shadow: inset 0 0 0 1px #E5DFD3;
+}
+
+.look-ajofun .aj-window {
+  position: absolute;
+  top: var(--gutter);
+  left: var(--gutter);
+  width: 520px;
+  height: 344px;
+  background: var(--ss-surface);
+  box-shadow: var(--ss-shadow-hero);
+}
+
+.look-ajofun .aj-window-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--ss-surface);
+}
+
+.look-ajofun .aj-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.look-ajofun .aj-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.look-ajofun .aj-title {
+  font-family: var(--ss-display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ss-text-strong);
+  letter-spacing: -0.01em;
+}
+
+.look-ajofun .aj-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.look-ajofun .aj-meta-text {
+  font-size: 11px;
+  color: var(--ss-text-faint);
+}
+
+.look-ajofun .aj-roster {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ss-line);
+  border-radius: var(--ss-radius-md);
+  background: var(--ss-surface);
+  overflow: hidden;
+}
+
+.look-ajofun .aj-roster > .ss-row {
+  border-radius: 0;
+}
+
+.look-ajofun .aj-roster > .ss-row + .ss-row {
+  border-top: 1px solid var(--ss-line-faint);
+}
+
+.look-ajofun .aj-satellite {
+  position: absolute;
+  left: var(--gutter);
+  bottom: 18px;
+  z-index: 20;
+  width: 316px;
+  border-radius: var(--ss-radius-lg);
+  background: var(--ss-surface);
+  box-shadow: var(--ss-shadow-satellite);
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.look-ajofun .aj-satellite[data-show="true"] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.look-ajofun .aj-sat-bar {
+  height: 3px;
+  width: 100%;
+  background: var(--ss-chrome);
+  overflow: hidden;
+  border-radius: var(--ss-radius-lg) var(--ss-radius-lg) 0 0;
+}
+
+.look-ajofun .aj-sat-bar-fill {
+  height: 100%;
+  width: 72%;
+  background: var(--ss-accent);
+  transition: width 0.5s ease;
+}
+
+.look-ajofun .aj-sat-inner {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.look-ajofun .aj-sat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.look-ajofun .aj-sat-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ss-accent-2);
+}
+
+.look-ajofun .aj-sat-name {
+  font-family: var(--ss-display);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ss-text-strong);
+}
+
+.look-ajofun .aj-sat-wish {
+  padding: 9px 11px;
+  border-radius: var(--ss-radius-sm);
+  background: #FAF8F4;
+  border: 1px solid var(--ss-line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.look-ajofun .aj-sat-wish-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ss-text-strong);
+}
+
+.look-ajofun .aj-sat-wish-note {
+  font-size: 11px;
+  color: var(--ss-text-faint);
+}
+
+.look-ajofun .aj-sat-sealed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.look-ajofun .aj-sat-sealed-copy {
+  font-size: 12px;
+  color: var(--ss-text-faint);
+  line-height: 1.35;
+}
+
+/* Compact mobile layout (< 520px container width) */
+.look-ajofun .ss-stage[data-layout="compact"] {
+  --gutter: 14px;
+}
+
+.look-ajofun .ss-stage[data-layout="compact"] .aj-window {
+  width: 340px;
+  height: 288px;
+}
+
+.look-ajofun .ss-stage[data-layout="compact"] .aj-window-body {
+  padding: 12px;
+  gap: 10px;
+}
+
+.look-ajofun .ss-stage[data-layout="compact"] .aj-title {
+  font-size: 14px;
+}
+
+.look-ajofun .ss-stage[data-layout="compact"] .aj-satellite {
+  left: 14px;
+  right: 14px;
+  width: auto;
+  bottom: 14px;
+}
+
+.look-ajofun .ss-stage[data-layout="compact"] .aj-sat-inner {
+  padding: 12px 14px;
+}

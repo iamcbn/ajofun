@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Àjọfún ribbon knot logo">
+  <defs>
+    <clipPath id="knot-clip">
+      <rect x="26" y="21" width="12" height="12" rx="3"/>
+    </clipPath>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="#FAF8F4" stroke="#E5DFD3" stroke-width="2"/>
+  <path fill="#1F4E3D" fill-rule="evenodd" d="M28 23L20 14.5Q17.5 12.5 14.5 14.5L11.5 18Q10.5 19.5 10.5 21.5V27.5Q10.5 31.5 14.5 31.5H27ZM23.5 25.5L16.5 19.5V26.5Z"/>
+  <path fill="#9B2C2C" fill-rule="evenodd" d="M36 23L44 14.5Q46.5 12.5 49.5 14.5L52.5 18Q53.5 19.5 53.5 21.5V27.5Q53.5 31.5 49.5 31.5H37ZM40.5 25.5L47.5 19.5V26.5Z"/>
+  <path fill="#1F4E3D" d="M24 34H31L24.5 50.5L21 46.5L16 48.5Z"/>
+  <path fill="#9B2C2C" d="M33 34H40L48 48.5L43 46.5L39.5 50.5Z"/>
+  <rect x="24" y="19" width="16" height="16" rx="4.5" fill="#FAF8F4"/>
+  <g clip-path="url(#knot-clip)">
+    <polygon points="26,21 38,21 26,33" fill="#1F4E3D"/>
+    <polygon points="38,21 38,33 26,33" fill="#9B2C2C"/>
+  </g>
+</svg>

@@ -1,0 +1,23 @@
+[project]
+name = "secret-santa-backend"
+version = "0.1.0"
+description = "FastAPI backend for Àjọfún (Anonymous Gifter) with Neon Auth JWKS verification and blind matching."
+readme = "../README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0",
+  "pg8000>=1.31.2",
+  "PyJWT[crypto]>=2.10.0",
+  "pydantic-settings>=2.6.0",
+  "httpx>=0.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
