@@ -73,6 +73,7 @@ export function ExchangeQAPage() {
       liveStatus={liveStatus}
       hasUnsealedMatch={Boolean(myAssignment?.revealed_at)}
       matchPath={`/exchanges/${exchange.id}/match`}
+      readOnly={exchange.status === 'completed'}
       onSendMessage={sendAnonymousMessage}
     />
   );

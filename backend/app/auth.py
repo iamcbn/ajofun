@@ -74,6 +74,19 @@ def verify_neon_jwt(token: str) -> AuthenticatedUser:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    aud = payload.get("aud")
+    if aud is not None and settings.allowed_issuers:
+        aud_values = [aud] if isinstance(aud, str) else list(aud) if isinstance(aud, list) else []
+        if not any(
+            isinstance(entry, str) and entry.rstrip("/") in settings.allowed_issuers
+            for entry in aud_values
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token audience does not match NEON_AUTH_URL.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
     sub = payload.get("sub")
     if not isinstance(sub, str) or not sub.strip():
         raise HTTPException(

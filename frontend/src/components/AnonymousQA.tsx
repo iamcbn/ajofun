@@ -22,6 +22,7 @@ interface AnonymousQAProps {
   liveStatus: LiveConnectionStatus;
   hasUnsealedMatch: boolean;
   matchPath?: string;
+  readOnly?: boolean;
   onSendMessage: (
     assignmentId: string,
     senderRole: AnonymousSenderRole,
@@ -59,6 +60,7 @@ export function AnonymousQA({
   liveStatus,
   hasUnsealedMatch,
   matchPath,
+  readOnly = false,
   onSendMessage,
 }: AnonymousQAProps) {
   const [activeTab, setActiveTab] = useState<'ask' | 'inbox'>('ask');
@@ -116,7 +118,7 @@ export function AnonymousQA({
   };
 
   const submitMessage = async () => {
-    if (!currentAssignmentId || sending) return;
+    if (readOnly || !currentAssignmentId || sending) return;
     const cleanBody = draft.trim();
     if (!cleanBody || identityCheck.blocked) return;
 
@@ -324,7 +326,11 @@ export function AnonymousQA({
           </div>
         )}
 
-        {currentAssignmentId ? (
+        {readOnly ? (
+          <p className="rounded-md bg-surface-subtle px-3.5 py-2.5 text-xs text-ink-muted">
+            This exchange is completed. Anonymous Q&amp;A is read-only.
+          </p>
+        ) : currentAssignmentId ? (
           <div className="space-y-1.5 border-t border-hairline pt-3.5">
             <form onSubmit={handleSubmit} className="flex items-end gap-2">
               <label htmlFor="anon-message-input" className="sr-only">

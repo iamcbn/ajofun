@@ -11,7 +11,8 @@ export function ResetPasswordPage() {
   const { requestPasswordResetOtp, resetPasswordWithOtp, resetPasswordWithToken } = useAuth();
   const [searchParams] = useSearchParams();
 
-  const safeRedirect = sanitizeRedirectPath(searchParams.get('redirect'));
+  const rawRedirect = searchParams.get('redirect')?.trim() ?? '';
+  const safeRedirect = sanitizeRedirectPath(rawRedirect || null);
   const tokenParam = searchParams.get('token')?.trim() ?? '';
   const errorParam = searchParams.get('error')?.trim() ?? '';
   const initialEmail = searchParams.get('email')?.trim() ?? '';
@@ -45,10 +46,9 @@ export function ResetPasswordPage() {
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
-  const signInHref =
-    safeRedirect !== '/'
-      ? `/auth?redirect=${encodeURIComponent(safeRedirect)}`
-      : '/auth';
+  const signInHref = rawRedirect
+    ? `/auth?redirect=${encodeURIComponent(safeRedirect)}`
+    : '/auth';
 
   const handleRequestCode = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();

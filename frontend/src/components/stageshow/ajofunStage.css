@@ -54,7 +54,8 @@
   position: absolute;
   top: var(--gutter);
   left: var(--gutter);
-  width: 520px;
+  right: var(--gutter);
+  width: auto;
   height: 344px;
   background: var(--ss-surface);
   box-shadow: var(--ss-shadow-hero);
@@ -72,7 +73,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
+}
+
+.look-ajofun .aj-header > button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .look-ajofun .aj-title-group {
@@ -89,6 +95,9 @@
   line-height: 1.2;
   color: var(--ss-text-strong);
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .look-ajofun .aj-meta {
@@ -220,11 +229,10 @@
 
 /* Compact mobile layout (< 520px container width) */
 .look-ajofun .ss-stage[data-layout="compact"] {
-  --gutter: 14px;
+  --gutter: 12px;
 }
 
 .look-ajofun .ss-stage[data-layout="compact"] .aj-window {
-  width: 340px;
   height: 288px;
 }
 
@@ -238,8 +246,8 @@
 }
 
 .look-ajofun .ss-stage[data-layout="compact"] .aj-satellite {
-  left: 14px;
-  right: 14px;
+  left: var(--gutter);
+  right: var(--gutter);
   width: auto;
   bottom: 14px;
 }

@@ -11,7 +11,7 @@ from app.auth import AuthenticatedUser, get_current_user
 from app.db import DbConnection, get_db, get_db_session_factory
 from app.identity_guard import check_identity_leak
 from app.matcher import DrawError, generate_assignments
-from app.qa_realtime import qa_broker
+from app.qa_realtime import qa_broker, qa_message_limiter, qa_webhook_limiter
 from app.schemas import (
     AnonymousMessageCreateRequest,
     AnonymousMessageResponse,
@@ -22,6 +22,8 @@ from app.schemas import (
 )
 
 router = APIRouter(prefix="/api/exchanges", tags=["exchanges"])
+
+MAX_MESSAGES_PER_THREAD = 200
 
 
 def _verify_exchange_member_or_organizer(
@@ -263,6 +265,16 @@ def post_anonymous_qa_message(
     db: DbConnection = Depends(get_db),
 ) -> AnonymousMessageResponse:
     """Validate, persist, and fan out an anonymous Q&A message via live SSE."""
+    allowed_rate, retry_after = qa_message_limiter.check_and_record(
+        f"{exchange_id}:{user.user_id}"
+    )
+    if not allowed_rate:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many messages sent. Please wait a moment before sending another.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     with db.transaction():
         with db.cursor() as cur:
             cur.execute(
@@ -280,7 +292,12 @@ def post_anonymous_qa_message(
                     detail="Exchange not found.",
                 )
 
-            if exchange["status"] not in ("drawn", "completed"):
+            if exchange["status"] == "completed":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="This exchange is completed and Anonymous Q&A is now read-only.",
+                )
+            if exchange["status"] != "drawn":
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Anonymous Q&A is only available after names are drawn.",
@@ -312,6 +329,21 @@ def post_anonymous_qa_message(
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="You do not have permission to post to this thread.",
+                )
+
+            cur.execute(
+                """
+                SELECT COUNT(*)::int AS message_count
+                FROM public.anonymous_messages
+                WHERE assignment_id = %s
+                """,
+                (payload.assignment_id,),
+            )
+            count_row = cur.fetchone()
+            if count_row and int(count_row["message_count"]) >= MAX_MESSAGES_PER_THREAD:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="This anonymous Q&A thread has reached its message limit.",
                 )
 
             cur.execute(
@@ -373,6 +405,16 @@ def notify_qa_webhook(
     db: DbConnection = Depends(get_db),
 ) -> QaWebhookResponse:
     """Authenticated webhook receiver that notifies connected Q&A clients to sync."""
+    allowed_rate, retry_after = qa_webhook_limiter.check_and_record(
+        f"{exchange_id}:{user.user_id}"
+    )
+    if not allowed_rate:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many sync notifications. Please wait a moment.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     with db.cursor() as cur:
         exchange = _verify_exchange_member_or_organizer(cur, exchange_id, user.user_id)
 

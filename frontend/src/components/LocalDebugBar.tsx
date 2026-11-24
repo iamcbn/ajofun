@@ -29,6 +29,14 @@ export function LocalDebugBar() {
     return subscribeLocalDebug(sync);
   }, []);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.style.scrollPaddingBottom = collapsed ? '' : '5.5rem';
+    return () => {
+      document.documentElement.style.scrollPaddingBottom = '';
+    };
+  }, [collapsed]);
+
   const currentUser = snapshot.users.find((u) => u.id === snapshot.currentUserId) ?? null;
   const portSuffix =
     typeof window !== 'undefined' && window.location.port ? ` (:${window.location.port})` : '';

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../hooks/useAuth';
 import { neonDataApi } from '../lib/neon';
 import { getTomorrowLocalDateString } from '../lib/validation';
 import type { Exchange } from '../types/database';
-import { CheckIcon, CloseIcon, SpinnerIcon } from './Icons';
+import { CheckIcon, ChevronDownIcon, CloseIcon, SpinnerIcon } from './Icons';
 import { formatOtpError, OtpCodeInput } from './OtpCodeInput';
 
 interface CreateExchangeModalProps {
@@ -13,8 +14,20 @@ interface CreateExchangeModalProps {
 }
 
 const FOCUSABLE_SELECTOR =
-  'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
+  'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 const RESEND_COOLDOWN_SECONDS = 30;
+const CURRENCY_OPTIONS = [
+  { value: 'NGN', label: 'NGN ₦' },
+  { value: 'USD', label: 'USD $' },
+  { value: 'EUR', label: 'EUR €' },
+  { value: 'GBP', label: 'GBP £' },
+  { value: 'CAD', label: 'CAD $' },
+  { value: 'AUD', label: 'AUD $' },
+  { value: 'GHS', label: 'GHS ₵' },
+  { value: 'KES', label: 'KES' },
+  { value: 'ZAR', label: 'ZAR R' },
+  { value: 'OTHER', label: 'Other' },
+] as const;
 
 export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchangeModalProps) {
   const { user, sendEmailVerificationOtp, verifyEmailWithOtp } = useAuth();
@@ -182,6 +195,11 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
   }
 
   const minExchangeDate = getTomorrowLocalDateString();
+  const selectedCurrencyLabel =
+    CURRENCY_OPTIONS.find((opt) => opt.value === currency)?.label ?? currency;
+  const clearError = () => {
+    if (error) setError(null);
+  };
 
   const handleSendHostOtp = async () => {
     if (!user?.email) return;
@@ -343,7 +361,7 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="otp-backdrop-in fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-3 backdrop-blur-[2px] sm:p-4"
       onClick={(e) => {
@@ -511,6 +529,7 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
 
             <form
               key="exchange-form"
+              noValidate
               onSubmit={handleSubmit}
               className="otp-step-in flex min-h-0 flex-1 flex-col"
             >
@@ -536,7 +555,10 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
                       required
                       maxLength={100}
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      onChange={(e) => {
+                        setTitle(e.target.value);
+                        clearError();
+                      }}
                       placeholder="e.g. Design Team Gift Swap"
                       className="mt-1.5 h-10 w-full rounded-md border border-hairline bg-surface px-3 text-sm text-ink placeholder:text-[#6B6660]"
                     />
@@ -555,7 +577,10 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
                       min="3"
                       step="1"
                       value={targetParticipants}
-                      onChange={(e) => setTargetParticipants(e.target.value)}
+                      onChange={(e) => {
+                        setTargetParticipants(e.target.value);
+                        clearError();
+                      }}
                       aria-describedby="ex-target-participants-help"
                       placeholder="No limit"
                       className="mt-1.5 h-10 w-full rounded-md border border-hairline bg-surface px-3 text-sm text-ink placeholder:text-[#6B6660]"
@@ -572,33 +597,46 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
                       Budget
                     </label>
                     <div className="mt-1.5 flex h-10 w-full overflow-hidden rounded-md border border-hairline bg-surface transition-colors focus-within:border-pine focus-within:ring-1 focus-within:ring-pine">
-                      <select
-                        id="ex-currency"
-                        aria-label="Currency"
-                        value={currency}
-                        onChange={(e) => setCurrency(e.target.value)}
-                        className="w-24 shrink-0 border-r border-hairline bg-surface-subtle/60 px-2 text-xs font-medium text-ink focus:outline-none focus:shadow-none"
-                      >
-                        <option value="NGN">NGN ₦</option>
-                        <option value="USD">USD $</option>
-                        <option value="EUR">EUR €</option>
-                        <option value="GBP">GBP £</option>
-                        <option value="CAD">CAD $</option>
-                        <option value="AUD">AUD $</option>
-                        <option value="GHS">GHS ₵</option>
-                        <option value="KES">KES</option>
-                        <option value="ZAR">ZAR R</option>
-                        <option value="OTHER">Other</option>
-                      </select>
+                      <div className="relative flex h-full w-24 shrink-0 items-center justify-between border-r border-hairline bg-surface-subtle/60 px-2.5 transition-colors focus-within:bg-surface-subtle">
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none truncate text-xs font-medium text-ink"
+                        >
+                          {selectedCurrencyLabel}
+                        </span>
+                        <ChevronDownIcon
+                          className="pointer-events-none h-3.5 w-3.5 shrink-0 text-ink-muted"
+                          aria-hidden="true"
+                        />
+                        <select
+                          id="ex-currency"
+                          aria-label="Currency"
+                          value={currency}
+                          onChange={(e) => {
+                            setCurrency(e.target.value);
+                            clearError();
+                          }}
+                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        >
+                          {CURRENCY_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                       <input
                         id="ex-budget"
                         type="number"
                         min="0"
                         step="0.01"
                         value={budgetAmount}
-                        onChange={(e) => setBudgetAmount(e.target.value)}
+                        onChange={(e) => {
+                          setBudgetAmount(e.target.value);
+                          clearError();
+                        }}
                         placeholder="No limit"
-                        className="min-w-0 flex-1 bg-transparent px-3 text-sm text-ink placeholder:text-[#6B6660] focus:outline-none focus:shadow-none"
+                        className="h-full min-w-0 flex-1 bg-transparent px-3 py-0 text-sm text-ink placeholder:text-[#6B6660] focus:outline-none focus:shadow-none"
                       />
                     </div>
                   </div>
@@ -612,7 +650,10 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
                       type="date"
                       min={minExchangeDate}
                       value={exchangeDate}
-                      onChange={(e) => setExchangeDate(e.target.value)}
+                      onChange={(e) => {
+                        setExchangeDate(e.target.value);
+                        clearError();
+                      }}
                       className="mt-1.5 h-10 w-full rounded-md border border-hairline bg-surface px-3 text-sm text-ink"
                     />
                   </div>
@@ -629,7 +670,10 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
                       required={Boolean(budgetAmount.trim())}
                       maxLength={10}
                       value={customCurrency}
-                      onChange={(e) => setCustomCurrency(e.target.value)}
+                      onChange={(e) => {
+                        setCustomCurrency(e.target.value);
+                        clearError();
+                      }}
                       placeholder="e.g. CHF, AED, ¥"
                       className="mt-1.5 h-10 w-full rounded-md border border-hairline bg-surface px-3 text-sm text-ink placeholder:text-[#6B6660]"
                     />
@@ -722,7 +766,10 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
                             required
                             maxLength={80}
                             value={myDisplayName}
-                            onChange={(e) => setMyDisplayName(e.target.value)}
+                            onChange={(e) => {
+                              setMyDisplayName(e.target.value);
+                              clearError();
+                            }}
                             placeholder="Your name"
                             className="h-9 w-full rounded-md border border-hairline bg-surface px-3 text-sm text-ink placeholder:text-[#6B6660]"
                           />
@@ -768,6 +815,7 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

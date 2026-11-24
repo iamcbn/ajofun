@@ -1,7 +1,45 @@
 from asyncio import Queue, QueueEmpty, QueueFull
-from collections import defaultdict
+from collections import defaultdict, deque
 from collections.abc import Iterable
+import math
+import time
 from typing import Any
+
+
+class SlidingWindowRateLimiter:
+    """In-memory per-key sliding-window rate limiter."""
+
+    def __init__(self, max_requests: int, window_seconds: float) -> None:
+        self._max_requests = max_requests
+        self._window_seconds = window_seconds
+        self._buckets: dict[str, deque[float]] = {}
+
+    def check_and_record(self, key: str) -> tuple[bool, int]:
+        now = time.monotonic()
+        cutoff = now - self._window_seconds
+
+        if len(self._buckets) > 1024:
+            stale_keys = [k for k, q in self._buckets.items() if not q or q[-1] <= cutoff]
+            for stale_key in stale_keys:
+                self._buckets.pop(stale_key, None)
+
+        bucket = self._buckets.get(key)
+        if bucket is None:
+            bucket = deque()
+            self._buckets[key] = bucket
+
+        while bucket and bucket[0] <= cutoff:
+            bucket.popleft()
+
+        if len(bucket) >= self._max_requests:
+            retry_after = max(1, math.ceil(self._window_seconds - (now - bucket[0])))
+            return False, retry_after
+
+        bucket.append(now)
+        return True, 0
+
+    def reset(self) -> None:
+        self._buckets.clear()
 
 
 class QARealtimeBroker:
@@ -99,3 +137,5 @@ class QARealtimeBroker:
 
 
 qa_broker = QARealtimeBroker()
+qa_message_limiter = SlidingWindowRateLimiter(max_requests=15, window_seconds=60.0)
+qa_webhook_limiter = SlidingWindowRateLimiter(max_requests=10, window_seconds=60.0)

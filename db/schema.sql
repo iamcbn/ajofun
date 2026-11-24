@@ -280,20 +280,51 @@ AS $$
   );
 $$;
 
+CREATE OR REPLACE FUNCTION app_private.normalize_identity_text(p_text TEXT)
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT translate(
+    lower(regexp_replace(COALESCE(p_text, ''), U&'[\200B\200C\200D\FEFF]', '', 'g')),
+    'áàâäãåéèêëíìîïóòôöõúùûüýÿñç013457@$',
+    'aaaaaaeeeeiiiiooooouuuuyyncoieastas'
+  );
+$$;
+
 CREATE OR REPLACE FUNCTION app_private.enforce_anonymous_message_privacy()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, neon_auth
 AS $$
 DECLARE
   v_sender_user_id TEXT;
   v_display_name TEXT;
   v_alias TEXT;
+  v_account_name TEXT;
+  v_email TEXT;
+  v_clean_email TEXT;
+  v_local_part TEXT;
+  v_zw_stripped TEXT;
   v_clean_body TEXT;
   v_collapsed_body TEXT;
-  v_token TEXT;
+  v_name TEXT;
+  v_norm_name TEXT;
+  v_collapsed_name TEXT;
+  v_raw_token TEXT;
+  v_norm_token TEXT;
+  v_candidate TEXT;
 BEGIN
+  IF TG_OP = 'INSERT' AND (
+    SELECT COUNT(*)
+    FROM public.anonymous_messages
+    WHERE assignment_id = NEW.assignment_id
+  ) >= 200 THEN
+    RAISE EXCEPTION 'This anonymous Q&A thread has reached its message limit.'
+      USING ERRCODE = '54000';
+  END IF;
+
   SELECT CASE WHEN NEW.sender_role = 'santa' THEN a.giver_id ELSE a.recipient_id END
   INTO v_sender_user_id
   FROM public.assignments a
@@ -311,71 +342,177 @@ BEGIN
   WHERE p.exchange_id = NEW.exchange_id
     AND p.user_id = v_sender_user_id;
 
-  v_clean_body := lower(
-    translate(
-      regexp_replace(NEW.body, U&'[\200B\200C\200D\FEFF]', '', 'g'),
-      '013457@$',
-      'oieastas'
-    )
-  );
+  SELECT COALESCE(u.name, ''), COALESCE(u.email, '')
+  INTO v_account_name, v_email
+  FROM neon_auth."user" u
+  WHERE u.id::text = v_sender_user_id;
+
+  v_zw_stripped := regexp_replace(NEW.body, U&'[\200B\200C\200D\FEFF]', '', 'g');
+  v_clean_body := app_private.normalize_identity_text(v_zw_stripped);
   v_collapsed_body := regexp_replace(v_clean_body, '[^a-z0-9]', '', 'g');
 
-  -- Block full display name or alias (both unspaced regex and collapsed spacing)
-  IF char_length(trim(v_display_name)) >= 2 THEN
-    IF v_clean_body ~* ('\m' || regexp_replace(lower(trim(v_display_name)), '([^\w\s])', '\\\1', 'g') || '\M')
-       OR (char_length(regexp_replace(lower(trim(v_display_name)), '[^a-z0-9]', '', 'g')) >= 3
-           AND position(regexp_replace(lower(trim(v_display_name)), '[^a-z0-9]', '', 'g') in v_collapsed_body) > 0) THEN
-      RAISE EXCEPTION 'Identity guard: your message contains your name. Keep your Anonymous Gifter identity secret!'
+  -- 1. Block sender email address and local-part handle
+  v_clean_email := lower(trim(regexp_replace(COALESCE(v_email, ''), U&'[\200B\200C\200D\FEFF]', '', 'g')));
+  IF v_clean_email <> '' THEN
+    IF position(v_clean_email in lower(v_zw_stripped)) > 0 THEN
+      RAISE EXCEPTION 'Identity guard: sharing your email address is not allowed in Anonymous Q&A.'
         USING ERRCODE = '22023';
     END IF;
-  END IF;
-
-  IF char_length(trim(v_alias)) >= 2 THEN
-    IF v_clean_body ~* ('\m' || regexp_replace(lower(trim(v_alias)), '([^\w\s])', '\\\1', 'g') || '\M')
-       OR (char_length(regexp_replace(lower(trim(v_alias)), '[^a-z0-9]', '', 'g')) >= 3
-           AND position(regexp_replace(lower(trim(v_alias)), '[^a-z0-9]', '', 'g') in v_collapsed_body) > 0) THEN
-      RAISE EXCEPTION 'Identity guard: your message contains your alias. Keep your Anonymous Gifter identity secret!'
-        USING ERRCODE = '22023';
-    END IF;
-  END IF;
-
-  -- Block individual name parts (3+ letters)
-  FOR v_token IN
-    SELECT regexp_split_to_table(lower(trim(v_display_name || ' ' || v_alias)), '[\s._-]+')
-  LOOP
-    IF char_length(v_token) >= 3 AND v_token NOT IN ('the', 'and', 'for', 'you', 'are', 'joy', 'may', 'art', 'red', 'tea', 'mug', 'box', 'gift', 'book', 'santa', 'gifter', 'anonymous') THEN
-      IF v_clean_body ~* ('\m' || regexp_replace(v_token, '([^\w\s])', '\\\1', 'g') || '\M')
-         OR (char_length(regexp_replace(v_token, '[^a-z0-9]', '', 'g')) >= 4
-             AND position(regexp_replace(v_token, '[^a-z0-9]', '', 'g') in v_collapsed_body) > 0) THEN
-        RAISE EXCEPTION 'Identity guard: your message includes your name ("%"). No spoilers allowed!', v_token
+    IF position('@' in v_clean_email) > 0 THEN
+      v_local_part := regexp_replace(split_part(v_clean_email, '@', 1), '[^a-z0-9]', '', 'g');
+      IF char_length(v_local_part) >= 4
+         AND v_local_part NOT IN (
+           'the', 'and', 'for', 'you', 'are', 'not', 'but', 'all', 'any', 'can', 'had', 'her', 'was',
+           'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'man', 'new', 'now', 'old',
+           'see', 'two', 'way', 'who', 'boy', 'did', 'its', 'let', 'put', 'say', 'she', 'too', 'use',
+           'may', 'joy', 'art', 'red', 'tea', 'mug', 'box', 'bag', 'hat', 'cup', 'pen', 'book', 'gift',
+           'santa', 'gifter', 'secret', 'match', 'will', 'hope', 'like', 'love', 'want', 'need', 'just',
+           'from', 'with', 'have', 'this', 'that', 'what', 'when', 'where', 'which', 'your', 'here', 'there'
+         )
+         AND v_clean_body ~* ('\m' || v_local_part || '\M') THEN
+        RAISE EXCEPTION 'Identity guard: your message includes your account handle ("%"). Remove it to stay anonymous.', v_local_part
           USING ERRCODE = '22023';
       END IF;
     END IF;
+  END IF;
+
+  -- 2. Block full display name, alias, account name, and individual name parts
+  FOR v_name IN
+    SELECT DISTINCT trim(term)
+    FROM unnest(ARRAY[v_display_name, v_alias, v_account_name]) AS t(term)
+    WHERE char_length(trim(term)) >= 2
+  LOOP
+    v_norm_name := trim(app_private.normalize_identity_text(v_name));
+    v_collapsed_name := regexp_replace(v_norm_name, '[^a-z0-9]', '', 'g');
+    IF char_length(v_norm_name) >= 2 THEN
+      IF v_clean_body ~* ('\m' || regexp_replace(v_norm_name, '([^\w\s])', '\\\1', 'g') || '\M')
+         OR (char_length(v_collapsed_name) >= 3 AND position(v_collapsed_name in v_collapsed_body) > 0) THEN
+        RAISE EXCEPTION 'Identity guard: your message contains your name or alias. Keep your Anonymous Gifter identity secret!'
+          USING ERRCODE = '22023';
+      END IF;
+    END IF;
+
+    FOR v_raw_token IN
+      SELECT trim(tok)
+      FROM regexp_split_to_table(v_name, '[\s._-]+') AS tok
+      WHERE char_length(trim(tok)) >= 3
+    LOOP
+      v_norm_token := regexp_replace(app_private.normalize_identity_text(v_raw_token), '[^a-z0-9]', '', 'g');
+      IF char_length(v_norm_token) >= 3
+         AND v_norm_token NOT IN (
+           'the', 'and', 'for', 'you', 'are', 'not', 'but', 'all', 'any', 'can', 'had', 'her', 'was',
+           'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'man', 'new', 'now', 'old',
+           'see', 'two', 'way', 'who', 'boy', 'did', 'its', 'let', 'put', 'say', 'she', 'too', 'use',
+           'may', 'joy', 'art', 'red', 'tea', 'mug', 'box', 'bag', 'hat', 'cup', 'pen', 'book', 'gift',
+           'santa', 'gifter', 'secret', 'match', 'will', 'hope', 'like', 'love', 'want', 'need', 'just',
+           'from', 'with', 'have', 'this', 'that', 'what', 'when', 'where', 'which', 'your', 'here', 'there',
+           'anonymous'
+         ) THEN
+        IF v_clean_body ~* ('\m' || v_norm_token || '\M')
+           OR (char_length(v_norm_token) >= 4 AND position(v_norm_token in v_collapsed_body) > 0) THEN
+          RAISE EXCEPTION 'Identity guard: your message includes your name ("%"). No spoilers allowed!', v_raw_token
+            USING ERRCODE = '22023';
+        END IF;
+      END IF;
+    END LOOP;
   END LOOP;
 
-  -- Block self-revelation phrases, emails, phone numbers, social @handles, and social profile URLs
-  IF NEW.body ~* '\m(my\s+name\s+is|i\s+go\s+by|call\s+me|my\s+initials\s+are|my\s+name\s+starts\s+with|starts\s+with\s+the\s+letter)\M'
-     OR NEW.body ~* '\m(it''?s|its|this\s+is)\s+me\M'
-     OR NEW.body ~* '\m(i\s+am|i''m)\s+the\s+(host|organizer)\M'
-     OR NEW.body ~* '\mi\s+created\s+this\s+exchange\M'
-     OR NEW.body ~* '(^|\n)\s*((love|cheers|best|sincerely|yours|signed|regards),|signed|from\s+your\s+friend,?)\s+(?!santa\M|gifter\M|anonymous\s+gifter\M)[a-z]{2,}' THEN
+  -- 3. Block self-introduction clauses ("vee here", "it's vee", "this is vee", "from vee")
+  FOR v_candidate IN
+    SELECT lower((regexp_matches(v_zw_stripped, '(?:^|[.!?,;:\n]\s*|\s-\s*)([a-z]{2,20})\s+here(?:\s*[.!?,;:]|$)', 'gi'))[1])
+  LOOP
+    IF v_candidate NOT IN (
+      'santa', 'gifter', 'secret', 'just', 'still', 'not', 'back', 'right', 'over', 'up', 'down', 'out',
+      'in', 'from', 'around', 'new', 'almost', 'nearly', 'already', 'always', 'never', 'also',
+      'only', 'even', 'both', 'all', 'none', 'some', 'any', 'every', 'very', 'so', 'too', 'no',
+      'yes', 'yeah', 'hey', 'hi', 'hello', 'well', 'ok', 'okay', 'wait', 'look', 'see', 'come',
+      'go', 'stay', 'be', 'am', 'is', 'are', 'was', 'were', 'been', 'living', 'working',
+      'sitting', 'waiting', 'typing', 'writing', 'asking', 'checking', 'hoping', 'wishing',
+      'freezing', 'snowing', 'raining', 'cold', 'warm', 'hot', 'dark', 'late', 'early', 'quick',
+      'short', 'long', 'good', 'great', 'nice', 'fine', 'happy', 'glad', 'sorry', 'thanks',
+      'thank', 'please', 'question', 'note', 'hint', 'clue', 'gift', 'present', 'package',
+      'parcel', 'delivery', 'shipping', 'size', 'color', 'coffee', 'tea', 'book', 'list',
+      'wishlist', 'nothing', 'something', 'anything', 'everything', 'nobody', 'somebody',
+      'anybody', 'everybody', 'who', 'what', 'where', 'when', 'why', 'how', 'we', 'they', 'it',
+      'he', 'she', 'you', 'i', 'me', 'us', 'them', 'him', 'her', 'this', 'that', 'these',
+      'those', 'there', 'then', 'now'
+    ) THEN
+      RAISE EXCEPTION 'Identity guard: it looks like you are signing in by name. Keep your message anonymous.'
+        USING ERRCODE = '22023';
+    END IF;
+  END LOOP;
+
+  FOR v_candidate IN
+    SELECT lower((regexp_matches(v_zw_stripped, '(?:^|[.!?,;:\n]\s*|\s-\s*)(?:it''?s|its|this\s+is)\s+([a-z]{2,20})(?:\s*[.!?,;:]|$)', 'gi'))[1])
+  LOOP
+    IF v_candidate NOT IN (
+      'a', 'an', 'the', 'my', 'your', 'our', 'their', 'his', 'her', 'not', 'no', 'so', 'very',
+      'really', 'just', 'only', 'still', 'already', 'almost', 'about', 'for', 'from', 'to',
+      'in', 'on', 'at', 'of', 'with', 'by', 'santa', 'gifter', 'secret', 'ok', 'okay', 'fine', 'good',
+      'great', 'nice', 'cool', 'fun', 'easy', 'hard', 'cold', 'warm', 'hot', 'late', 'early',
+      'true', 'false', 'real', 'possible', 'impossible', 'important', 'helpful', 'useful',
+      'better', 'best', 'worse', 'worst', 'time', 'going', 'coming', 'snowing', 'raining',
+      'getting', 'looking', 'working', 'happening', 'done', 'ready', 'here', 'there',
+      'something', 'nothing', 'anything', 'everything', 'someone', 'anyone', 'everyone',
+      'either', 'neither', 'both', 'all', 'one', 'two', 'three', 'small', 'medium', 'large',
+      'extra', 'blue', 'red', 'green', 'black', 'white', 'pink', 'purple', 'yellow', 'orange',
+      'brown', 'gray', 'grey', 'gold', 'silver', 'free', 'cheap', 'expensive', 'worth', 'up',
+      'down', 'out', 'off', 'over', 'under', 'super', 'pretty', 'quite', 'too', 'much', 'more',
+      'less', 'such', 'what', 'why', 'how', 'when', 'where', 'who', 'which', 'that', 'this',
+      'because', 'like', 'kind', 'sort', 'way', 'alright', 'actually', 'probably', 'definitely',
+      'maybe', 'hopefully', 'totally', 'completely', 'mostly', 'mainly', 'basically',
+      'honestly', 'literally', 'seriously', 'obviously', 'clearly', 'simply', 'purely',
+      'fairly', 'rather', 'especially', 'particularly', 'usually', 'normally', 'generally',
+      'currently', 'recently', 'finally', 'soon', 'later', 'today', 'tomorrow', 'tonight',
+      'gift', 'present', 'surprise', 'anonymous', 'private', 'blind', 'random', 'optional',
+      'required', 'locked', 'sealed', 'open', 'closed', 'full', 'empty', 'blank', 'dark',
+      'light', 'sweet', 'spicy', 'sour', 'salty', 'bitter', 'iced', 'decaf', 'whole', 'ground',
+      'loose', 'bagged', 'paperback', 'hardcover', 'digital', 'physical', 'handmade',
+      'homemade', 'local', 'vintage', 'used', 'new', 'old', 'big', 'little', 'tiny', 'huge',
+      'tall', 'short', 'wide', 'narrow', 'soft', 'cozy', 'comfy', 'cute', 'funny', 'weird',
+      'crazy', 'awesome', 'amazing', 'wonderful', 'lovely', 'perfect', 'ideal'
+    ) THEN
+      RAISE EXCEPTION 'Identity guard: it looks like you are introducing yourself by name. Keep your identity secret.'
+        USING ERRCODE = '22023';
+    END IF;
+  END LOOP;
+
+  FOR v_candidate IN
+    SELECT lower((regexp_matches(v_zw_stripped, '(?:^|[.!?,;:\n]\s*|\s-\s*)from\s+([a-z]{2,20})(?:\s*[.!?]|$)', 'gi'))[1])
+  LOOP
+    IF v_candidate NOT IN (
+      'santa', 'gifter', 'secret', 'your', 'the', 'a', 'an', 'my', 'our', 'this', 'that', 'here', 'there',
+      'home', 'work', 'online', 'amazon', 'etsy', 'target', 'walmart', 'above', 'below'
+    ) THEN
+      RAISE EXCEPTION 'Identity guard: signing off with a name is not allowed in Anonymous Q&A.'
+        USING ERRCODE = '22023';
+    END IF;
+  END LOOP;
+
+  -- 4. Block self-revelation phrases, emails, phone numbers, social @handles, and social profile URLs
+  IF v_zw_stripped ~* '\m(my\s+name\s+is|i\s+go\s+by|call\s+me|my\s+initials\s+are|my\s+name\s+starts\s+with|starts\s+with\s+the\s+letter)\M'
+     OR v_zw_stripped ~* '\m(it''?s|its|this\s+is)\s+me\M'
+     OR v_zw_stripped ~* '\m(i\s+am|i''m)\s+the\s+(host|organizer)\M'
+     OR v_zw_stripped ~* '\mi\s+created\s+this\s+exchange\M'
+     OR v_zw_stripped ~* '(^|\n)\s*((love|cheers|best|sincerely|yours|signed|regards),|signed|from\s+your\s+friend,?)\s+(?!santa\M|gifter\M|anonymous\s+gifter\M)[a-z]{2,}'
+     OR v_zw_stripped ~ '(^|\s)-\s*(?!Santa\M|Gifter\M|Anonymous\s+Gifter\M)[A-Z][a-z]{2,}\s*$' THEN
     RAISE EXCEPTION 'Identity guard: self-identification phrases are not allowed in Anonymous Q&A.'
       USING ERRCODE = '22023';
   END IF;
 
-  IF NEW.body ~* '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' THEN
+  IF v_zw_stripped ~* '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' THEN
     RAISE EXCEPTION 'Identity guard: sharing email addresses is not allowed in Anonymous Q&A.'
       USING ERRCODE = '22023';
   END IF;
 
-  IF NEW.body ~* '(\+?\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\M'
-     OR NEW.body ~* '\m\d{10,14}\M' THEN
+  IF v_zw_stripped ~* '(\+?\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\M'
+     OR v_zw_stripped ~* '\m\d{10,14}\M' THEN
     RAISE EXCEPTION 'Identity guard: sharing phone numbers is not allowed in Anonymous Q&A.'
       USING ERRCODE = '22023';
   END IF;
 
-  IF NEW.body ~* '(^|\s)@[a-z0-9_]{3,}\M'
-     OR NEW.body ~* '(instagram\.com|twitter\.com|x\.com|linkedin\.com/in|facebook\.com|tiktok\.com/@|wa\.me|t\.me)/[^\s]+' THEN
+  IF v_zw_stripped ~* '(^|\s)@[a-z0-9_]{3,}\M'
+     OR v_zw_stripped ~* '(instagram\.com|twitter\.com|x\.com|linkedin\.com/in|facebook\.com|tiktok\.com/@|wa\.me|t\.me)/[^\s]+' THEN
     RAISE EXCEPTION 'Identity guard: social handles and profile links are not allowed in Anonymous Q&A.'
       USING ERRCODE = '22023';
   END IF;
@@ -449,6 +586,7 @@ REVOKE ALL ON FUNCTION app_private.is_assignment_recipient(UUID, TEXT) FROM PUBL
 REVOKE ALL ON FUNCTION app_private.assignment_matches_exchange(UUID, UUID) FROM PUBLIC;
 REVOKE ALL ON FUNCTION app_private.has_open_spot(UUID) FROM PUBLIC;
 REVOKE ALL ON FUNCTION app_private.valid_target_participants(UUID, INTEGER) FROM PUBLIC;
+REVOKE ALL ON FUNCTION app_private.normalize_identity_text(TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION app_private.enforce_anonymous_message_privacy() FROM PUBLIC;
 REVOKE ALL ON FUNCTION app_private.is_email_verified(TEXT) FROM PUBLIC;
 

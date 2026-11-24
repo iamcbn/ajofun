@@ -125,7 +125,9 @@ export function Layout({ children }: { children: ReactNode }) {
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 outline-none sm:px-6 sm:py-10"
+        className={`mx-auto w-full max-w-5xl flex-1 px-4 py-6 outline-none sm:px-6 sm:py-10 ${
+          __LOCAL_DEBUG__ ? 'pb-24 sm:pb-24' : ''
+        }`}
       >
         {children}
       </main>

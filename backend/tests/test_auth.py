@@ -102,3 +102,15 @@ def test_verify_neon_jwt_returns_503_on_jwks_connection_error(
     with pytest.raises(HTTPException) as exc_info:
         auth.verify_neon_jwt(token)
     assert exc_info.value.status_code == 503
+
+
+def test_verify_neon_jwt_validates_audience_when_present(eddsa_auth_env) -> None:
+    matching_token = eddsa_auth_env({"aud": "https://example.neonauth.test"})
+    user = auth.verify_neon_jwt(matching_token)
+    assert user.user_id == "user-123"
+
+    mismatched_token = eddsa_auth_env({"aud": "https://wrong-service.example.com"})
+    with pytest.raises(HTTPException) as exc_info:
+        auth.verify_neon_jwt(mismatched_token)
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.detail == "Token audience does not match NEON_AUTH_URL."

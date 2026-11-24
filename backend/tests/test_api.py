@@ -10,7 +10,8 @@ from fastapi.testclient import TestClient
 from app.auth import AuthenticatedUser, get_current_user
 from app.db import get_db, get_db_session_factory
 from app.main import create_app
-from app.qa_realtime import qa_broker
+from app.qa_realtime import qa_broker, qa_message_limiter, qa_webhook_limiter
+from app.routes.exchanges import MAX_MESSAGES_PER_THREAD
 
 
 class FakeCursor:
@@ -190,6 +191,12 @@ class FakeCursor:
                     break
             return
 
+        if "SELECT COUNT(*)::int AS message_count FROM public.anonymous_messages WHERE assignment_id = %s" in normalized_sql:
+            asgn_id = params[0]
+            count = sum(1 for m in self.state["anonymous_messages"] if m["assignment_id"] == asgn_id)
+            self._result = [{"message_count": count}]
+            return
+
         if normalized_sql.startswith("INSERT INTO public.anonymous_messages"):
             ex_id, asgn_id, sender_role, body = params
             row = {
@@ -241,7 +248,9 @@ class FakeConnection:
 
 
 @pytest.fixture()
-def seeded_env() -> tuple[TestClient, dict, dict[str, AuthenticatedUser], UUID]:
+def seeded_env() -> Generator[tuple[TestClient, dict, dict[str, AuthenticatedUser], UUID], None, None]:
+    qa_message_limiter.reset()
+    qa_webhook_limiter.reset()
     ex_id = UUID("11111111-1111-1111-1111-111111111111")
     organizer = AuthenticatedUser(user_id="user-org", email="org@example.com", name="Organizer")
     guest = AuthenticatedUser(user_id="user-guest", email="guest@example.com", name="Guest")
@@ -306,7 +315,11 @@ def seeded_env() -> tuple[TestClient, dict, dict[str, AuthenticatedUser], UUID]:
 
     client = TestClient(app)
     users = {"organizer": organizer, "guest": guest, "active": active_user}
-    return client, state, users, ex_id
+    try:
+        yield client, state, users, ex_id
+    finally:
+        qa_message_limiter.reset()
+        qa_webhook_limiter.reset()
 
 
 def test_health(seeded_env) -> None:
@@ -623,3 +636,91 @@ def test_qa_messages_identity_guard_and_realtime_fanout(seeded_env) -> None:
         qa_broker.unsubscribe(ex_key, "user-org", q_org)
         qa_broker.unsubscribe(ex_key, org_asgn["recipient_id"], q_recipient)
         qa_broker.unsubscribe(ex_key, other_uid, q_bystander)
+
+
+def test_qa_rejects_completed_exchange_and_enforces_limits(seeded_env) -> None:
+    client, state, users, ex_id = seeded_env
+
+    users["active"]["current"] = users["guest"]
+    assert client.post("/api/invites/SNOW2026/join", json={"display_name": "Guest"}).status_code == 200
+
+    users["active"]["current"] = users["organizer"]
+    assert client.post(f"/api/exchanges/{ex_id}/draw").status_code == 200
+    org_asgn = next(a for a in state["assignments"] if a["giver_id"] == "user-org")
+
+    # 1. Completed exchange blocks new Q&A messages with 409
+    state["exchanges"][ex_id]["status"] = "completed"
+    completed_res = client.post(
+        f"/api/exchanges/{ex_id}/qa/messages",
+        json={
+            "assignment_id": str(org_asgn["id"]),
+            "sender_role": "santa",
+            "body": "Hope you liked your gift!",
+        },
+    )
+    assert completed_res.status_code == 409
+
+    # 2. Per-thread message cap blocks inserts at MAX_MESSAGES_PER_THREAD
+    state["exchanges"][ex_id]["status"] = "drawn"
+    qa_message_limiter.reset()
+    state["anonymous_messages"].extend(
+        {
+            "id": uuid4(),
+            "exchange_id": ex_id,
+            "assignment_id": org_asgn["id"],
+            "sender_role": "santa",
+            "body": f"Message {i}",
+            "created_at": datetime.now(timezone.utc),
+        }
+        for i in range(MAX_MESSAGES_PER_THREAD)
+    )
+    capped_res = client.post(
+        f"/api/exchanges/{ex_id}/qa/messages",
+        json={
+            "assignment_id": str(org_asgn["id"]),
+            "sender_role": "santa",
+            "body": "One message too many",
+        },
+    )
+    assert capped_res.status_code == 429
+
+    # 3. Message rate limit returns 429 with Retry-After header after 15 requests/min
+    state["anonymous_messages"].clear()
+    qa_message_limiter.reset()
+    for i in range(15):
+        res = client.post(
+            f"/api/exchanges/{ex_id}/qa/messages",
+            json={
+                "assignment_id": str(org_asgn["id"]),
+                "sender_role": "santa",
+                "body": f"Question {i}",
+            },
+        )
+        assert res.status_code == 201
+
+    rate_limited_msg = client.post(
+        f"/api/exchanges/{ex_id}/qa/messages",
+        json={
+            "assignment_id": str(org_asgn["id"]),
+            "sender_role": "santa",
+            "body": "Question 16",
+        },
+    )
+    assert rate_limited_msg.status_code == 429
+    assert int(rate_limited_msg.headers["Retry-After"]) >= 1
+
+    # 4. Webhook rate limit returns 429 with Retry-After header after 10 requests/min
+    qa_webhook_limiter.reset()
+    for _ in range(10):
+        res = client.post(
+            f"/api/exchanges/{ex_id}/qa-webhook",
+            json={"event": "message_created", "assignment_id": str(org_asgn["id"])},
+        )
+        assert res.status_code == 200
+
+    rate_limited_hook = client.post(
+        f"/api/exchanges/{ex_id}/qa-webhook",
+        json={"event": "message_created", "assignment_id": str(org_asgn["id"])},
+    )
+    assert rate_limited_hook.status_code == 429
+    assert int(rate_limited_hook.headers["Retry-After"]) >= 1

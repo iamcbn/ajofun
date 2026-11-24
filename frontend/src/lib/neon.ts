@@ -21,9 +21,23 @@ import { sanitizeRedirectPath, validateExternalUrl } from './validation';
 
 const rawAuthUrl = (import.meta.env.VITE_NEON_AUTH_URL as string | undefined)?.trim() ?? '';
 const rawDataApiUrl = (import.meta.env.VITE_NEON_DATA_API_URL as string | undefined)?.trim() ?? '';
+const useDirectAuth =
+  ((import.meta.env.VITE_NEON_AUTH_DIRECT as string | undefined)?.trim().toLowerCase() ?? '') ===
+  'true';
+
+function resolveAuthBaseUrl(configuredUrl: string): string {
+  const normalized = configuredUrl.replace(/\/+$/, '');
+  if (!normalized) {
+    return '';
+  }
+  if (normalized.startsWith('/') || useDirectAuth) {
+    return normalized;
+  }
+  return '/api/auth';
+}
 
 export const isLocalDebugMode = __LOCAL_DEBUG__;
-export const NEON_AUTH_URL = rawAuthUrl.replace(/\/+$/, '');
+export const NEON_AUTH_URL = resolveAuthBaseUrl(rawAuthUrl);
 export const NEON_DATA_API_URL = rawDataApiUrl.replace(/\/+$/, '');
 export const isNeonConfigured = isLocalDebugMode || Boolean(NEON_AUTH_URL && NEON_DATA_API_URL);
 
@@ -238,7 +252,7 @@ export const neonAuth = {
             detail.toLowerCase().includes('challenge cookie')
           ) {
             throw new Error(
-              'Google sign-in could not verify your browser session cookie. Allow third-party cookies for this site (or disable strict shields for localhost) and try again, or sign in with email and password.',
+              'Google sign-in could not verify your browser session cookie. Your sign-in session may have expired or cookies may be blocked for this site — please try again, or sign in with email and password.',
             );
           }
           throw new Error(`Sign-in verification failed: ${detail}. Please try signing in again.`);
