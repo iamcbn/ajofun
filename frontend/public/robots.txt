@@ -4,4 +4,4 @@ Disallow: /auth
 Disallow: /join/
 Disallow: /exchanges/
 
-Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://ajofun.pages.dev/sitemap.xml

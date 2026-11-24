@@ -282,14 +282,9 @@ export function HomePage() {
           className="space-y-5"
         >
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 id="your-exchanges-heading" className="font-display text-2xl font-semibold text-ink">
-                Your exchanges
-              </h2>
-              <p className="text-xs text-ink-muted">
-                Manage rosters, unseal your secret match, or ask anonymous questions.
-              </p>
-            </div>
+            <h2 id="your-exchanges-heading" className="font-display text-2xl font-semibold text-ink">
+              Your exchanges
+            </h2>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-1 text-xs font-medium text-ink-muted">
               {isExchangesLoading ? (
                 <>

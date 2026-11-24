@@ -4,6 +4,9 @@
 --       connects as the database owner (DATABASE_URL) to run blind draws, public invite
 --       previews, and invite-code joins while Neon Data API requests run as `authenticated`.
 
+-- Ensure pg_session_jwt is installed so the `auth` schema and auth.user_id() exist
+CREATE EXTENSION IF NOT EXISTS pg_session_jwt;
+
 -- Ensure required role exists when running outside managed Neon Data API bootstrap
 DO $$
 BEGIN

@@ -74,135 +74,130 @@ const PARTICIPANTS = [
 
 export function HowItWorksStageshow() {
   return (
-    <figure className="space-y-2.5">
-      <div aria-hidden="true" className="w-full overflow-hidden">
-        <Stage
-          width={500}
-          height={348}
-          compact={{ below: 420, width: 328, height: 292 }}
-          initial={INITIAL}
-          poster={POSTER}
-          script={runWalkthrough}
-          cursor={{ at: REST, ripple: true }}
-          className="look-ajofun"
-        >
-          {(s, _rect, layout) => (
-            <>
-              <Window
-                url="ajofun.app/exchanges"
-                lights="grey"
-                className="aj-window"
-                receded={s.matchCard}
-              >
-                <div className="aj-window-body">
-                  <div className="aj-header">
-                    <div className="aj-title-group">
-                      <div className="aj-title">Studio Holiday Swap</div>
-                      <div className="aj-meta">
-                        <Badge
-                          tone={s.drawn ? 'danger' : 'success'}
-                          dot={!s.drawn}
-                        >
-                          <Roll>{s.drawn ? 'Names drawn' : 'Open'}</Roll>
-                        </Badge>
-                        <span className="aj-meta-text">4 of 4 joined</span>
-                      </div>
-                    </div>
-
-                    <Button
-                      data-target="draw-btn"
-                      variant={s.drawn ? 'secondary' : 'danger'}
-                      size={layout === 'compact' ? 'small' : 'medium'}
-                      icon={
-                        s.drawn ? (
-                          <CheckIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                        ) : (
-                          <ShuffleIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                        )
-                      }
-                    >
-                      {s.drawn ? 'Drawn' : 'Draw names'}
-                    </Button>
-                  </div>
-
-                  <div className="aj-roster">
-                    {PARTICIPANTS.slice(0, layout === 'compact' ? 2 : 3).map((person) => (
-                      <Row
-                        key={person.name}
-                        pad={layout === 'compact' ? 9 : 10}
-                        lead={<Avatar name={person.name} size={26} />}
-                        title={<Text>{person.name}</Text>}
-                        subtitle={<Text filler>{person.note}</Text>}
-                        meta={<Bar w={42} h={6} tone={2} />}
-                      />
-                    ))}
-                    <Row
-                      pad={layout === 'compact' ? 9 : 10}
-                      lead={<Avatar plain size={26} />}
-                      title={<Bar w={92} h={6} tone={3} />}
-                      subtitle={<Bar w={136} h={5} tone={1} />}
-                    />
-                  </div>
-                </div>
-              </Window>
-
-              <div className="aj-satellite" data-show={s.matchCard}>
-                {s.unsealed && (
-                  <div className="aj-sat-bar">
-                    <div className="aj-sat-bar-fill" />
-                  </div>
-                )}
-                <div className="aj-sat-inner">
-                  <div className="aj-sat-head">
-                    <span className="aj-sat-eyebrow">Your Secret Match</span>
-                    <Badge tone={s.unsealed ? 'success' : 'danger'}>
-                      {s.unsealed ? '10s peek' : 'Sealed'}
-                    </Badge>
-                  </div>
-
-                  {s.unsealed ? (
-                    <>
-                      <div className="aj-sat-name">Sam Patel</div>
-                      <div className="aj-sat-wish">
-                        <span className="aj-sat-wish-title">Cozy sci-fi novella</span>
-                        <span className="aj-sat-wish-note">
-                          No tree nuts · Leave under cabin tree
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="aj-sat-sealed">
-                      <span className="aj-sat-sealed-copy">
-                        Hidden until you break the seal.
-                      </span>
-                      <Button
-                        data-target="unseal-btn"
-                        variant="danger"
-                        size="small"
-                        icon={<LockIcon className="h-3 w-3" aria-hidden="true" />}
+    <div aria-hidden="true" className="w-full overflow-hidden">
+      <Stage
+        width={500}
+        height={348}
+        compact={{ below: 420, width: 328, height: 292 }}
+        initial={INITIAL}
+        poster={POSTER}
+        script={runWalkthrough}
+        cursor={{ at: REST, ripple: true }}
+        className="look-ajofun"
+      >
+        {(s, _rect, layout) => (
+          <>
+            <Window
+              url="ajofun.pages.dev/exchanges"
+              lights="grey"
+              className="aj-window"
+              receded={s.matchCard}
+            >
+              <div className="aj-window-body">
+                <div className="aj-header">
+                  <div className="aj-title-group">
+                    <div className="aj-title">Studio Holiday Swap</div>
+                    <div className="aj-meta">
+                      <Badge
+                        tone={s.drawn ? 'danger' : 'success'}
+                        dot={!s.drawn}
                       >
-                        Unseal
-                      </Button>
+                        <Roll>{s.drawn ? 'Names drawn' : 'Open'}</Roll>
+                      </Badge>
+                      <span className="aj-meta-text">4 of 4 joined</span>
                     </div>
-                  )}
+                  </div>
+
+                  <Button
+                    data-target="draw-btn"
+                    variant={s.drawn ? 'secondary' : 'danger'}
+                    size={layout === 'compact' ? 'small' : 'medium'}
+                    icon={
+                      s.drawn ? (
+                        <CheckIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                      ) : (
+                        <ShuffleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                      )
+                    }
+                  >
+                    {s.drawn ? 'Drawn' : 'Draw names'}
+                  </Button>
+                </div>
+
+                <div className="aj-roster">
+                  {PARTICIPANTS.slice(0, layout === 'compact' ? 2 : 3).map((person) => (
+                    <Row
+                      key={person.name}
+                      pad={layout === 'compact' ? 9 : 10}
+                      lead={<Avatar name={person.name} size={26} />}
+                      title={<Text>{person.name}</Text>}
+                      subtitle={<Text filler>{person.note}</Text>}
+                      meta={<Bar w={42} h={6} tone={2} />}
+                    />
+                  ))}
+                  <Row
+                    pad={layout === 'compact' ? 9 : 10}
+                    lead={<Avatar plain size={26} />}
+                    title={<Bar w={92} h={6} tone={3} />}
+                    subtitle={<Bar w={136} h={5} tone={1} />}
+                  />
                 </div>
               </div>
+            </Window>
 
-              <span
-                data-target="rest"
-                style={{
-                  position: 'absolute',
-                  left: REST[layout].x,
-                  top: REST[layout].y,
-                }}
-              />
-            </>
-          )}
-        </Stage>
-      </div>
-      <figcaption className="text-xs leading-relaxed text-ink-muted">
-        Blind server draw &middot; 10-second private reveal &middot; Anonymous Q&amp;A
-      </figcaption>
-    </figure>
+            <div className="aj-satellite" data-show={s.matchCard}>
+              {s.unsealed && (
+                <div className="aj-sat-bar">
+                  <div className="aj-sat-bar-fill" />
+                </div>
+              )}
+              <div className="aj-sat-inner">
+                <div className="aj-sat-head">
+                  <span className="aj-sat-eyebrow">Your Secret Match</span>
+                  <Badge tone={s.unsealed ? 'success' : 'danger'}>
+                    {s.unsealed ? '10s peek' : 'Sealed'}
+                  </Badge>
+                </div>
+
+                {s.unsealed ? (
+                  <>
+                    <div className="aj-sat-name">Sam Patel</div>
+                    <div className="aj-sat-wish">
+                      <span className="aj-sat-wish-title">Cozy sci-fi novella</span>
+                      <span className="aj-sat-wish-note">
+                        No tree nuts · Leave under cabin tree
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="aj-sat-sealed">
+                    <span className="aj-sat-sealed-copy">
+                      Hidden until you break the seal.
+                    </span>
+                    <Button
+                      data-target="unseal-btn"
+                      variant="danger"
+                      size="small"
+                      icon={<LockIcon className="h-3 w-3" aria-hidden="true" />}
+                    >
+                      Unseal
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <span
+              data-target="rest"
+              style={{
+                position: 'absolute',
+                left: REST[layout].x,
+                top: REST[layout].y,
+              }}
+            />
+          </>
+        )}
+      </Stage>
+    </div>
   );
 }

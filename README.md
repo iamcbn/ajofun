@@ -2,6 +2,8 @@
 
 An open-source, multi-group Anonymous Gifter gift exchange platform powered by **Neon PostgreSQL**, **Neon Auth**, **Neon Data API + Row-Level Security (RLS)**, a lightweight **Python (FastAPI)** backend for blind draws and invite previews, and a **React + TypeScript + Vite** frontend.
 
+**Live Preview:** [https://ajofun.pages.dev](https://ajofun.pages.dev)
+
 ## Features
 
 - **Multi-Group Isolation:** Anyone can create an independent gift exchange with its own budget, date, invite link, and participant roster.
