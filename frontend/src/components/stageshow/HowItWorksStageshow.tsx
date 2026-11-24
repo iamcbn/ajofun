@@ -67,9 +67,9 @@ async function runWalkthrough(a: Act<DemoState>) {
 }
 
 const PARTICIPANTS = [
-  { name: 'Alex Rivera', note: 'Whole bean espresso · Host' },
-  { name: 'Jordan Lee', note: 'Ceramic pour-over dripper' },
-  { name: 'Sam Patel', note: 'Cardamom chai · Novella' },
+  { name: 'Bamidele Olatunji', note: 'Roasted coffee beans · Host' },
+  { name: 'Amaka Nwagbo', note: 'Hand-dyed adire tote · Book' },
+  { name: 'Sadiq Suleiman', note: 'Ceramic mug & loose-leaf tea' },
 ];
 
 export function HowItWorksStageshow() {
@@ -96,7 +96,7 @@ export function HowItWorksStageshow() {
               <div className="aj-window-body">
                 <div className="aj-header">
                   <div className="aj-title-group">
-                    <div className="aj-title">Studio Holiday Swap</div>
+                    <div className="aj-title">Detty December Swap</div>
                     <div className="aj-meta">
                       <Badge
                         tone={s.drawn ? 'danger' : 'success'}
@@ -161,11 +161,11 @@ export function HowItWorksStageshow() {
 
                 {s.unsealed ? (
                   <>
-                    <div className="aj-sat-name">Sam Patel</div>
+                    <div className="aj-sat-name">Amaka Nwagbo</div>
                     <div className="aj-sat-wish">
-                      <span className="aj-sat-wish-title">Cozy sci-fi novella</span>
+                      <span className="aj-sat-wish-title">Hand-dyed adire tote</span>
                       <span className="aj-sat-wish-note">
-                        No tree nuts · Leave under cabin tree
+                        No groundnuts · Bring to Friday hangout
                       </span>
                     </div>
                   </>
