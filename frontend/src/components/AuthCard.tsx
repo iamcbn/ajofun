@@ -91,9 +91,14 @@ export function AuthCard({
     }
   };
 
-  const startEmailVerification = async (targetEmail: string, notice: string) => {
+  const startEmailVerification = async (
+    targetEmail: string,
+    notice: string,
+    shouldSendOtp = true,
+  ) => {
     const cleanEmail = targetEmail.trim().toLowerCase();
-    const res = await sendEmailVerificationOtp(cleanEmail);
+    const res =
+      shouldSendOtp || __LOCAL_DEBUG__ ? await sendEmailVerificationOtp(cleanEmail) : {};
     setPendingVerificationEmail(cleanEmail);
     setOtp('');
     setDebugOtp(res.debugOtp ?? null);
@@ -122,7 +127,7 @@ export function AuthCard({
         }
         const result = await signUpWithEmail(cleanName, cleanEmail, password);
         if (result.requiresEmailVerification) {
-          await startEmailVerification(cleanEmail, '');
+          await startEmailVerification(cleanEmail, '', false);
           return;
         }
         onSuccess?.();
