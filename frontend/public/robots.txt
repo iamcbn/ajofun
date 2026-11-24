@@ -1,3 +1,16 @@
+# Allow social link-preview bots to render cards for /join/ invite links
+User-agent: Twitterbot
+User-agent: LinkedInBot
+User-agent: facebookexternalhit
+User-agent: WhatsApp
+User-agent: Discordbot
+User-agent: Slackbot
+User-agent: TelegramBot
+Allow: /
+Disallow: /auth
+Disallow: /exchanges/
+
+# Keep search engines from indexing private auth, invite, and exchange pages
 User-agent: *
 Allow: /
 Disallow: /auth
