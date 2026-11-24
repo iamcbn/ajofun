@@ -251,9 +251,9 @@ export function JoinPage() {
           initialMode="signup"
           redirectPath={redirectTarget}
           signupHeading="Create your account to join"
-          signupSubheading="Enter your name, email, and password (or continue with Google), then add your wishlist."
+          signupSubheading="Create an account to join and add your wishlist."
           heading="Sign in to join this exchange"
-          subheading="Once signed in, you will add your wishlist in one quick step."
+          subheading="Sign in to continue to your wishlist."
         />
       ) : (
         <section className="rounded-xl border border-hairline bg-surface p-6 sm:p-7 space-y-5">
@@ -261,9 +261,6 @@ export function JoinPage() {
             <h2 className="font-display text-2xl font-semibold text-ink">
               Join this exchange
             </h2>
-            <p className="mt-1 text-sm text-ink-muted">
-              Gift ideas are optional if you&apos;re open to surprises. You can update your wishlist anytime on the exchange page.
-            </p>
           </div>
 
           {joinError && (

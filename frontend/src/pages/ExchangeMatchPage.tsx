@@ -62,7 +62,7 @@ export function ExchangeMatchPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-hairline bg-surface-subtle/45 px-4 py-3 text-xs">
         <span className="text-ink-muted">
-          Need a hint on size, color, or delivery?
+          Need a hint?
         </span>
         <Link
           to={`/exchanges/${exchange.id}/qa`}

@@ -159,9 +159,12 @@ export function AnonymousQA({
             <span
               role="status"
               aria-live="polite"
-              className="inline-flex items-center gap-1.5 rounded-full bg-pine/10 px-2.5 py-0.5 text-xs font-medium text-pine"
+              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-500/25"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-pine" aria-hidden="true" />
+              <span className="relative flex h-2 w-2" aria-hidden="true">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
               Live
             </span>
           )}
@@ -251,8 +254,8 @@ export function AnonymousQA({
           <div className="py-10 text-center">
             <p className="mx-auto max-w-sm text-sm text-ink-muted">
               {activeTab === 'ask'
-                ? 'No messages yet. Ask about sizes, favorites, or delivery notes.'
-                : 'Nothing from your Anonymous Gifter yet. New messages show up here automatically.'}
+                ? 'No messages yet.'
+                : 'Nothing from your Anonymous Gifter yet.'}
             </p>
           </div>
         ) : (
@@ -343,9 +346,7 @@ export function AnonymousQA({
                 maxLength={1000}
                 disabled={sending}
                 aria-invalid={identityCheck.blocked || Boolean(error)}
-                aria-describedby={
-                  activeAlertMessage ? 'qa-composer-alert qa-composer-hint' : 'qa-composer-hint'
-                }
+                aria-describedby={activeAlertMessage ? 'qa-composer-alert' : undefined}
                 value={draft}
                 onChange={(e) => {
                   setDraft(e.target.value);
@@ -379,9 +380,6 @@ export function AnonymousQA({
                 )}
               </button>
             </form>
-            <p id="qa-composer-hint" className="text-[11px] text-ink-muted">
-              Names, contact info, and identity clues are blocked. Press Enter to send.
-            </p>
           </div>
         ) : (
           activeTab === 'inbox' &&

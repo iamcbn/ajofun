@@ -23,7 +23,7 @@ export function ExchangeQAPage() {
           Anonymous Q&amp;A unlocks once names are drawn
         </h2>
         <p className="max-w-md text-sm text-ink-muted">
-          Check back after the blind draw to message your match or reply to your Anonymous Gifter.
+          Check back after the draw to message anonymously.
         </p>
         <div className="pt-1">
           <Link

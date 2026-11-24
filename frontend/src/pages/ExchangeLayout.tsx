@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Link,
   NavLink,
@@ -11,6 +11,8 @@ import {
 import { AddToCalendarMenu } from '../components/AddToCalendarMenu';
 import {
   CalendarIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   SpinnerIcon,
   UsersIcon,
 } from '../components/Icons';
@@ -76,6 +78,7 @@ export function ExchangeLayout() {
   const debugPreviewLoading = useDebugLoadingPreview();
   const navigate = useNavigate();
   const location = useLocation();
+  const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);
 
   const {
     exchange,
@@ -242,10 +245,19 @@ export function ExchangeLayout() {
             </span>
             {isDrawn && liveStatus === 'live' && (
               <span
-                className="h-1.5 w-1.5 rounded-full bg-pine"
+                className="relative flex h-2 w-2"
                 aria-label="Live connected"
                 title="Live connected"
-              />
+              >
+                <span
+                  className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+                  aria-hidden="true"
+                />
+                <span
+                  className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"
+                  aria-hidden="true"
+                />
+              </span>
             )}
             {isDrawn && incomingMessages.length > 0 && (
               <span className="rounded-full bg-pine/10 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-pine sm:px-2 sm:text-[10px]">
@@ -256,13 +268,13 @@ export function ExchangeLayout() {
         </nav>
       </div>
 
-      <header className="relative overflow-hidden rounded-2xl border border-hairline bg-surface p-5 sm:p-6 space-y-4">
+      <header className="relative rounded-2xl border border-hairline bg-surface p-4 sm:p-6 space-y-3 sm:space-y-4">
         <div
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${
-            isDrawn ? 'bg-seal' : 'bg-pine'
-          }`}
-        />
+          className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+        >
+          <div className={`h-1 w-full ${isDrawn ? 'bg-seal' : 'bg-pine'}`} />
+        </div>
         {refreshing && (
           <div
             aria-hidden="true"
@@ -303,39 +315,76 @@ export function ExchangeLayout() {
           </div>
         </div>
 
-        <div className="grid gap-2.5 border-t border-hairline pt-4 text-xs text-ink-muted sm:grid-cols-3">
-          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-surface-subtle/60 px-3 py-2">
-            <span className="inline-flex items-center gap-1.5 font-medium text-ink">
-              <CalendarIcon className="h-3.5 w-3.5 text-pine" aria-hidden="true" />
-              {formatExchangeDate(exchange.exchange_date)}
+        <div className="border-t border-hairline pt-3 sm:pt-4">
+          <button
+            type="button"
+            aria-expanded={mobileDetailsOpen}
+            aria-controls="exchange-header-details"
+            onClick={() => setMobileDetailsOpen((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-2 text-left text-xs text-ink-muted sm:hidden"
+          >
+            <span className="flex min-w-0 items-center gap-2 truncate">
+              <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-pine" aria-hidden="true" />
+              <span className="truncate font-medium text-ink">
+                {formatExchangeDate(exchange.exchange_date)}
+              </span>
+              <span aria-hidden="true">&middot;</span>
+              <span className="inline-flex shrink-0 items-center gap-1">
+                <UsersIcon className="h-3.5 w-3.5 text-pine" aria-hidden="true" />
+                <span>
+                  {targetCount !== null
+                    ? `${participants.length}/${targetCount}`
+                    : participants.length}
+                </span>
+              </span>
             </span>
-            {exchange.exchange_date && (
-              <AddToCalendarMenu
-                event={{
-                  id: exchange.id,
-                  title: exchange.title,
-                  exchangeDate: exchange.exchange_date,
-                  description: exchange.description,
-                  budgetAmount: exchange.budget_amount,
-                  currency: exchange.currency,
-                  exchangeUrl,
-                }}
-              />
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 rounded-lg bg-surface-subtle/60 px-3 py-2">
-            <span>Budget:</span>
-            <strong className="font-medium text-ink">
-              {formatBudget(exchange.budget_amount, exchange.currency)}
-            </strong>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-lg bg-surface-subtle/60 px-3 py-2">
-            <UsersIcon className="h-3.5 w-3.5 text-pine" aria-hidden="true" />
-            <span className="font-medium text-ink">
-              {targetCount !== null
-                ? `${participants.length} of ${targetCount} participants`
-                : `${participants.length} ${participants.length === 1 ? 'participant' : 'participants'}`}
+            <span className="inline-flex shrink-0 items-center gap-1 font-medium text-pine">
+              {mobileDetailsOpen ? 'Hide' : 'Details'}
+              {mobileDetailsOpen ? (
+                <ChevronUpIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              ) : (
+                <ChevronDownIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
             </span>
+          </button>
+
+          <div
+            id="exchange-header-details"
+            className={`${mobileDetailsOpen ? 'mt-2.5 grid' : 'hidden'} gap-2.5 text-xs text-ink-muted sm:mt-0 sm:grid sm:grid-cols-3`}
+          >
+            <div className="flex flex-wrap items-center gap-2 rounded-lg bg-surface-subtle/60 px-3 py-2">
+              <span className="inline-flex items-center gap-1.5 font-medium text-ink">
+                <CalendarIcon className="h-3.5 w-3.5 text-pine" aria-hidden="true" />
+                {formatExchangeDate(exchange.exchange_date)}
+              </span>
+              {exchange.exchange_date && (
+                <AddToCalendarMenu
+                  event={{
+                    id: exchange.id,
+                    title: exchange.title,
+                    exchangeDate: exchange.exchange_date,
+                    description: exchange.description,
+                    budgetAmount: exchange.budget_amount,
+                    currency: exchange.currency,
+                    exchangeUrl,
+                  }}
+                />
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 rounded-lg bg-surface-subtle/60 px-3 py-2">
+              <span>Budget:</span>
+              <strong className="font-medium text-ink">
+                {formatBudget(exchange.budget_amount, exchange.currency)}
+              </strong>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-lg bg-surface-subtle/60 px-3 py-2">
+              <UsersIcon className="h-3.5 w-3.5 text-pine" aria-hidden="true" />
+              <span className="font-medium text-ink">
+                {targetCount !== null
+                  ? `${participants.length} of ${targetCount} participants`
+                  : `${participants.length} ${participants.length === 1 ? 'participant' : 'participants'}`}
+              </span>
+            </div>
           </div>
         </div>
       </header>

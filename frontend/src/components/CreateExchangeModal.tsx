@@ -512,9 +512,6 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
                 <h2 id="create-exchange-title" className="font-display text-2xl font-semibold text-ink">
                   Start a gift exchange
                 </h2>
-                <p className="mt-0.5 text-xs text-ink-muted">
-                  Only a name is required — everything else is optional.
-                </p>
               </div>
               <button
                 type="button"
@@ -581,13 +578,9 @@ export function CreateExchangeModal({ open, onClose, onCreated }: CreateExchange
                         setTargetParticipants(e.target.value);
                         clearError();
                       }}
-                      aria-describedby="ex-target-participants-help"
                       placeholder="No limit"
                       className="mt-1.5 h-10 w-full rounded-md border border-hairline bg-surface px-3 text-sm text-ink placeholder:text-[#6B6660]"
                     />
-                    <p id="ex-target-participants-help" className="mt-1 text-[11px] text-ink-muted">
-                      Optional cap to unlock draw
-                    </p>
                   </div>
                 </div>
 

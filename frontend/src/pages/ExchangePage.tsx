@@ -239,9 +239,6 @@ export function ExchangePage() {
                 <h2 className="font-display text-xl font-semibold text-ink">
                   {preDrawHeadline}
                 </h2>
-                <p className="text-xs leading-relaxed text-ink-muted">
-                  Assignments run blindly on the server so even the host stays surprised.
-                </p>
               </div>
 
               {(!confirmDraw || !canDraw) && (
@@ -387,8 +384,8 @@ export function ExchangePage() {
                 </div>
                 <p className="text-xs leading-relaxed text-ink-muted">
                   {myAssignment.revealed_at
-                    ? 'Hidden under a privacy veil; peek for 10 seconds at a time.'
-                    : 'Break the seal privately to view who you drew.'}
+                    ? 'Peek for 10s at a time.'
+                    : 'Break the seal to see your match.'}
                 </p>
               </div>
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-pine group-hover:underline underline-offset-4">
@@ -417,16 +414,16 @@ export function ExchangePage() {
                   </h2>
                   <span className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
                     {liveStatus === 'live' && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-pine" aria-hidden="true" />
+                      <span className="relative flex h-2 w-2" aria-hidden="true">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                      </span>
                     )}
                     {totalQaMessages} {totalQaMessages === 1 ? 'message' : 'messages'}
                   </span>
                 </div>
                 <p className="text-xs leading-relaxed text-ink-muted">
-                  Ask your match questions or reply to your Anonymous Gifter
-                  {incomingMessages.length > 0
-                    ? ` (${incomingMessages.length} from your Gifter).`
-                    : '.'}
+                  Message your match or Gifter.
                 </p>
               </div>
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-pine group-hover:underline underline-offset-4">
@@ -457,9 +454,6 @@ export function ExchangePage() {
                   <h2 className="font-display text-lg font-semibold text-ink">
                     Join the participant list
                   </h2>
-                  <p className="text-xs text-ink-muted">
-                    Add optional gift ideas, dislikes, or delivery notes for your Anonymous Gifter.
-                  </p>
                 </div>
                 <WishlistForm
                   key={`${exchange.id}-${user.id}-new`}
@@ -512,7 +506,7 @@ export function ExchangePage() {
                   Your wishlist
                 </h2>
                 <p className="text-xs text-ink-muted">
-                  Gift ideas, dislikes, and delivery notes are shared privately with your Anonymous Gifter.
+                  Shared privately with your Anonymous Gifter.
                 </p>
               </div>
               <WishlistForm
@@ -576,7 +570,7 @@ export function ExchangePage() {
 
               {!hasAnyWishlistContent ? (
                 <p className="text-sm text-ink-muted">
-                  No gift ideas or delivery notes yet. Add a few hints for your Anonymous Gifter.
+                  No gift ideas or delivery notes yet.
                 </p>
               ) : (
                 <div className="space-y-4">

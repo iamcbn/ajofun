@@ -204,8 +204,7 @@ export function RevealCard({ assignment, recipient, onUnseal }: RevealCardProps)
               Your match is sealed
             </h2>
             <p className="text-sm leading-relaxed text-ink-muted">
-              Break the seal when nobody is looking over your shoulder. Your match stays visible for{' '}
-              {PEEK_DURATION_SECONDS} seconds, then blurs automatically.
+              Coast clear? Peek for {PEEK_DURATION_SECONDS} seconds before it blurs.
             </p>
           </div>
 
@@ -301,7 +300,7 @@ export function RevealCard({ assignment, recipient, onUnseal }: RevealCardProps)
                 <h3 className="text-sm font-semibold text-ink">Wishlist</h3>
                 {recipient.wishlist_items.length === 0 ? (
                   <p className="mt-1.5 text-sm text-ink-muted">
-                    No gift ideas listed. Ask in Anonymous Q&amp;A if you want hints.
+                    No gift ideas yet — ask in Anonymous Q&amp;A.
                   </p>
                 ) : (
                   <ul className="mt-2.5 divide-y divide-hairline rounded-lg border border-hairline bg-surface-subtle/35">
@@ -354,7 +353,7 @@ export function RevealCard({ assignment, recipient, onUnseal }: RevealCardProps)
             </span>
             <h2 className="font-display text-2xl font-semibold text-ink">Match hidden</h2>
             <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-ink-muted">
-              Privacy veil active in case someone is nearby.
+              No peeking — kept under wraps until you tap.
             </p>
             <button
               ref={peekBtnRef}
